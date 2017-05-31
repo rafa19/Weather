@@ -2,6 +2,7 @@ package rafa.weather.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.ftoslab.openweatherretrieverz.CurrentWeatherInfo;
 import com.google.gson.Gson;
@@ -53,20 +54,18 @@ public class Database {
         int intMaxTemp = (int) Double.parseDouble(currentWeatherInfo.getCurrentTemperatureMax());
         String strMinTemp = intMinTemp + "° ";
         String strMaxTemp = intMaxTemp + "° ";
-
-        /*if (intMinTemp > 0) {
-            strMinTemp = "+" + intMinTemp + "° ";
+        String windSpeed = currentWeatherInfo.getWindSpeed();
+        int windIndex = windSpeed.indexOf(".");
+        if (windIndex > 0) {
+            windSpeed = windSpeed.substring(0, windIndex);
         }
-        if (intMaxTemp > 0) {
-            strMaxTemp = "+" + intMaxTemp + "° ";
-        }*/
         Calendar c = Calendar.getInstance();
         SimpleDateFormat dateformat = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
         String datetime = dateformat.format(c.getTime());
         //currentWeatherInfo.get
         Weather weather = new Weather(strMinTemp, strMaxTemp, currentWeatherInfo.getCityName(), (int) Double.parseDouble(currentWeatherInfo.getCurrentTemperature()) + "°",
                 currentWeatherInfo.getWeatherDescriptionLong().toUpperCase(), currentWeatherInfo.getWeatherIconLink(), datetime, currentWeatherInfo.getCityId(),
-                currentWeatherInfo.getWindSpeed(), currentWeatherInfo.getHumidity(), currentWeatherInfo.getPressure());
+                windSpeed, currentWeatherInfo.getHumidity(), currentWeatherInfo.getPressure());
         insertWeather(weather);
     }
 

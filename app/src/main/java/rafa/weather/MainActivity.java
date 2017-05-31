@@ -15,6 +15,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -64,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
     TextView txtWind;
     @BindView(R.id.imgCondition)
     ImageView imgCondition;
+    @BindView(R.id.btnSetting)
+    ImageView btnSetting;
+
 
     private String cityID = Other.CITY_IDS[0];
     private String cityName = Other.CITY_NAMES[0];
@@ -76,6 +80,14 @@ public class MainActivity extends AppCompatActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
         setTitle("");
+
+        btnSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), CityChooserActivity.class);
+                startActivityForResult(intent, REQUESTCITYCHOOSER);
+            }
+        });
 
         Intent alarm = new Intent(getApplicationContext(), AlarmReceiver.class);
         boolean alarmRunning = (PendingIntent.getBroadcast(getApplicationContext(), 0, alarm, PendingIntent.FLAG_NO_CREATE) != null);
@@ -92,32 +104,33 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (Other.isOnline(getApplicationContext())) {
-            OpenWeatherRetrieverZ retriever = new OpenWeatherRetrieverZ(Other.API_KEY);
-            retriever.updateCurrentWeatherInfo(cityID, new WeatherCallback() {
-                @Override
-                public void onReceiveWeatherInfo(CurrentWeatherInfo currentWeatherInfo) {
-                    // Switch the weather unit to Metric
-                    currentWeatherInfoC = WeatherUnitConverter.convertToMetric(currentWeatherInfo);
-                    database.updateCurrentWeather(currentWeatherInfoC);
-                    Weather weather = database.getWeather(cityID);
-                    if (weather != null) {
-                        updateView(weather);
-                    }
-                }
-
-                @Override
-                public void onFailure(String error) {
-                    Log.e("error", error);
-                }
-            });
-
+            requestWeather();
             if (database.isFirstTime()) {
                 WeatherCall.getData(getApplicationContext());
             }
-
         }
     }
 
+    private void requestWeather() {
+        OpenWeatherRetrieverZ retriever = new OpenWeatherRetrieverZ(Other.API_KEY);
+        retriever.updateCurrentWeatherInfo(cityID, new WeatherCallback() {
+            @Override
+            public void onReceiveWeatherInfo(CurrentWeatherInfo currentWeatherInfo) {
+                // Switch the weather unit to Metric
+                currentWeatherInfoC = WeatherUnitConverter.convertToMetric(currentWeatherInfo);
+                database.updateCurrentWeather(currentWeatherInfoC);
+                Weather weather = database.getWeather(cityID);
+                if (weather != null) {
+                    updateView(weather);
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e("error", error);
+            }
+        });
+    }
 
     private void updateView(Weather weather) {
         txtTemperature.setText(weather.getTemperature());
@@ -137,25 +150,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            Intent intent = new Intent(getApplicationContext(), CityChooserActivity.class);
-            startActivityForResult(intent, REQUESTCITYCHOOSER);
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == REQUESTCITYCHOOSER) {
@@ -166,6 +160,10 @@ public class MainActivity extends AppCompatActivity {
                 if (weather != null) {
                     updateView(weather);
                 }
+                if (Other.isOnline(getApplicationContext())) {
+                    requestWeather();
+                }
+
             }
         }
     }
