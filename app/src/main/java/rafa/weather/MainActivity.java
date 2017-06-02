@@ -109,6 +109,10 @@ public class MainActivity extends AppCompatActivity {
                 WeatherCall.getData(getApplicationContext());
             }
         }
+        else
+        {
+            Other.showToast(MainActivity.this,getString(R.string.network_error));
+        }
     }
 
     private void requestWeather() {
